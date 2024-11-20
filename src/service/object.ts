@@ -6,7 +6,7 @@ import { Object, ObjectWithVersion } from "../interface/object"
 export const getObjectsService = async (bucket_id: number): Promise<Object[]> => {
     const connection = await db.getConnection()
     try {
-        const sql = 'SELECT * FROM `objects` WHERE `bucket` = ?'
+        const sql = 'SELECT * FROM `objects` LEFT JOIN `buckets` ON `objects`.`bucket` = `buckets`.`bid` WHERE `objects`.`bucket` = ?'
         const [rows] = await connection.query(sql, [bucket_id])
         return rows as Object[]
     } catch (error) {

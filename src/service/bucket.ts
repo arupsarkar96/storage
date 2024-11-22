@@ -21,7 +21,7 @@ export const getBucketsService = async (): Promise<Bucket[]> => {
 export const getBucket = async (bucket: string): Promise<Bucket | null> => {
     const connection = await db.getConnection()
     try {
-        const sql = 'SELECT * FROM `buckets` WHERE `bucket_name` = ?'
+        const sql = 'SELECT * FROM `buckets` WHERE `bucket_id` = ?'
         const [rows]: [RowDataPacket[], unknown] = await connection.query(sql, [bucket])
         return rows.length > 0 ? rows[0] as Bucket : null
     } catch (error) {
@@ -35,8 +35,21 @@ export const getBucket = async (bucket: string): Promise<Bucket | null> => {
 export const insertBucketService = async (bucket: string) => {
     const connection = await db.getConnection()
     try {
-        const sql = "INSERT INTO `buckets`(`bucket_name`) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM `buckets` WHERE `bucket_name` = ?)"
+        const sql = "INSERT INTO `buckets`(`bucket_id`) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM `buckets` WHERE `bucket_id` = ?)"
         const [result]: [any, any] = await connection.query(sql, [bucket, bucket])
+    } catch (error) {
+        console.log(error)
+    } finally {
+        connection.release()
+    }
+}
+
+
+export const deleteBucketService = async (bucket: string) => {
+    const connection = await db.getConnection()
+    try {
+        const sql = "DELETE FROM `buckets` WHERE `bucket_id` = ?"
+        const [result]: [any, any] = await connection.query(sql, [bucket])
     } catch (error) {
         console.log(error)
     } finally {

@@ -1,12 +1,12 @@
 import { RowDataPacket } from "mysql2"
 import db from "../db"
-import { Object, ObjectWithVersion } from "../interface/object"
+import { Object } from "../interface/object"
+import { v4 as uuid } from 'uuid'
 
-
-export const getObjectsService = async (bucket_id: number): Promise<Object[]> => {
+export const getObjectsService = async (bucket_id: string): Promise<Object[]> => {
     const connection = await db.getConnection()
     try {
-        const sql = 'SELECT * FROM `objects` LEFT JOIN `buckets` ON `objects`.`bucket` = `buckets`.`bid` WHERE `objects`.`bucket` = ?'
+        const sql = 'SELECT * FROM `objects` WHERE `bucket_id` = ? ORDER BY `timestamp` DESC'
         const [rows] = await connection.query(sql, [bucket_id])
         return rows as Object[]
     } catch (error) {
@@ -16,27 +16,25 @@ export const getObjectsService = async (bucket_id: number): Promise<Object[]> =>
     }
 }
 
-export const insertObjectService = async (bucketId: number, objectname: string): Promise<number> => {
+export const insertObjectService = async (bucketId: string, objectname: string, mime: string, size: number, path: string, objectId: string) => {
     const connection = await db.getConnection()
     try {
-        const sql = "INSERT INTO `objects`(`bucket`, `filename`) SELECT ?,? WHERE NOT EXISTS (SELECT 1 FROM `objects` WHERE `filename` = ? AND bucket = ?)"
-        const [result]: [any, any] = await connection.query(sql, [bucketId, objectname, objectname, bucketId])
-        return result.insertId as number
+        const sql = "INSERT INTO `objects`(`oid`, `bucket_id`, `filename`, `mime`, `size`, `path`) VALUES (?,?,?,?,?,?)"
+        const [result]: [any, any] = await connection.query(sql, [objectId, bucketId, objectname, mime, size, path])
     } catch (error) {
         console.log(error)
-        return 0
     } finally {
         connection.release()
     }
 }
 
-export const getObjectWithVersionService = async (bucket: string, object: string): Promise<ObjectWithVersion | null> => {
+export const getObjectService = async (bucket: string, object: string): Promise<Object | null> => {
 
     const connection = await db.getConnection()
     try {
-        const sql = "SELECT * FROM `versions` LEFT JOIN `objects` ON `versions`.`oid` = `objects`.`oid` LEFT JOIN `buckets` ON `buckets`.`bid` = `objects`.`bucket` WHERE `objects`.`filename` = ? AND `buckets`.`bucket_name` = ? ORDER BY `versions`.`vid` DESC LIMIT 1"
+        const sql = "SELECT * FROM `objects` WHERE `filename` = ? AND `bucket_id` = ?"
         const [result]: [RowDataPacket[], unknown] = await connection.query(sql, [object, bucket])
-        return result.length > 0 ? result[0] as ObjectWithVersion : null
+        return result.length > 0 ? result[0] as Object : null
     } catch (error) {
         console.log(error)
         return null
@@ -48,11 +46,10 @@ export const getObjectWithVersionService = async (bucket: string, object: string
 export const deleteObjectService = async (filename: string, bucket: string) => {
     const connection = await db.getConnection()
     try {
-        const sql = 'DELETE objects FROM objects LEFT JOIN buckets ON objects.bucket = buckets.bid WHERE objects.filename = ? AND buckets.bucket_name = ?'
+        const sql = 'DELETE FROM objects WHERE filename = ? AND bucket_id = ?'
         await connection.query(sql, [filename, bucket])
     } catch (error) {
         console.log(error)
-        return null
     } finally {
         connection.release()
     }

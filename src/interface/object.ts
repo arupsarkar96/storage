@@ -1,11 +1,9 @@
-import { Version } from "./version";
 
 export interface Object {
-    oid: number,
-    bucket: number,
-    filename: string
-}
-
-export interface ObjectWithVersion extends Object, Version {
-
+    oid: string,
+    bucket_id: string,
+    filename: string,
+    mime: string,
+    size: number,
+    path: string
 }

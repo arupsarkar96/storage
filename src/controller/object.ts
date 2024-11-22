@@ -1,28 +1,22 @@
-import { Object, ObjectWithVersion } from "../interface/object"
-import { getBucket } from "../service/bucket"
-import { deleteObjectService, getObjectWithVersionService, insertObjectService } from "../service/object"
-import { getAllVersionService, insertVersionService } from "../service/version"
-import { v4 as uuidv4 } from "uuid"
+import { Object } from "../interface/object"
+import { deleteObjectService, getObjectService, insertObjectService } from "../service/object"
 import fs from 'fs'
 
-export const insertObjectController = async (bucketname: string, objectname: string, mime: string, size: number, location: string) => {
-    const bucketData = await getBucket(bucketname)
-    const bucketId = bucketData?.bid
-    const objectId = await insertObjectService(bucketId!, objectname)
-    const ouuid = uuidv4()
-    insertVersionService(objectId, ouuid, mime, size, location)
-    return { etag: ouuid }
+export const insertObjectController = async (bucket: string, objectname: string, mime: string, size: number, location: string, objectId: string): Promise<string> => {
+    await insertObjectService(bucket, objectname, mime, size, location, objectId)
+    return objectId
 }
 
-export const getObjectController = async (bucket: string, object: string): Promise<ObjectWithVersion | null> => {
-    return getObjectWithVersionService(bucket, object)
+export const getObjectController = async (bucket: string, object: string): Promise<Object | null> => {
+    return getObjectService(bucket, object)
 }
 
 export const deleteObjectCrontroller = async (bucket: string, object: string): Promise<string> => {
-    const versions = await getAllVersionService(bucket, object)
-    versions.forEach(async (v) => {
-        fs.unlinkSync(v.path)
-    })
-    await deleteObjectService(object, bucket)
-    return `Deleted ${object} with ${versions.length} versions`
+    const objectData = await getObjectService(bucket, object)
+
+    if (objectData != null) {
+        fs.unlinkSync(objectData.path)
+        await deleteObjectService(object, bucket)
+    }
+    return `Deleted ${object}`
 }

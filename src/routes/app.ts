@@ -8,13 +8,13 @@ import { deleteObjectCrontroller, getObjectController, insertObjectController } 
 const appRoute = Router()
 
 // Buckets Fetch [GET]
-appRoute.get('/buckets', async (req, res) => {
+appRoute.get('/', async (req, res) => {
     const data = await getBucketsController()
     res.json(data)
 })
 
 // Specific Bucket [GET]
-appRoute.get('/buckets/:bucket', async (req, res) => {
+appRoute.get('/:bucket', async (req, res) => {
     const { bucket } = req.params
     const data = await getBucketController(bucket)
 
@@ -30,35 +30,39 @@ appRoute.get('/buckets/:bucket', async (req, res) => {
     }
 })
 
-// Bucket Create [POST]
-appRoute.post('/buckets/:bucket', async (req, res) => {
+// Bucket Create [PUT]
+appRoute.put('/:bucket', async (req, res) => {
     const { bucket } = req.params
     insertBucketController(bucket)
     res.sendStatus(200)
 })
 
 // Bucket Delete [DELETE]
-appRoute.delete('/buckets/:bucket', async (req, res) => {
+appRoute.delete('/:bucket', async (req, res) => {
     const { bucket } = req.params
     const data = await deleteBucketController(bucket)
     res.json({ message: data })
 })
 
-// Object Store [POST]
-appRoute.post('/:bucket/:object', upload.single("file"), async (req, res) => {
+// Object Store [PUT]
+appRoute.put('/:bucket/:object', upload.single("file"), async (req, res) => {
     const { bucket, object } = req.params
-    const sourceFile = req.file?.path
-    const destinationFile = `${currentStorageDrive}/${req.file?.filename}`
 
-    fs.copyFileSync(sourceFile!, destinationFile)
-    fs.unlinkSync(sourceFile!)
+    if (req.file) {
+        const sourceFile = req.file.path
+        const destinationFile = `${currentStorageDrive}/${req.file.filename}`
 
-    const uploadedData = await insertObjectController(bucket, object, req.file?.mimetype!, req.file?.size!, destinationFile)
-    res.send(uploadedData)
+        fs.copyFileSync(sourceFile, destinationFile)
+        fs.unlinkSync(sourceFile)
+
+        const uploadedData = await insertObjectController(bucket, object, req.file.mimetype, req.file.size, destinationFile, req.file.filename)
+        res.send(uploadedData)
+    } else {
+        res.sendStatus(500)
+    }
 })
 
 // Object Stat Fetch [HEAD]
-
 appRoute.head('/:bucket/:object', async (req, res) => {
     const { bucket, object } = req.params;
 
@@ -68,7 +72,7 @@ appRoute.head('/:bucket/:object', async (req, res) => {
         if (data !== null) {
             // Set headers with metadata
             res.set({
-                'ETag': data.uuid,
+                'ETag': data.oid,
                 'Content-Disposition': `inline; filename="${data.filename}"`,
                 'Content-Length': data.size,
                 'Content-Type': data.mime
@@ -92,7 +96,7 @@ appRoute.get('/:bucket/:object', async (req, res) => {
         const stream = fs.createReadStream(data.path)
         stream.on('open', () => {
             res.setHeader("Content-Length", data.size)
-            res.setHeader("ETag", data.uuid)
+            res.setHeader("ETag", data.oid)
             res.setHeader("Content-Type", data.mime)
             res.setHeader("Cache-Control", "public, max-age=3600")
             stream.pipe(res)

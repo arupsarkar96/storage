@@ -2,13 +2,13 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 
-if (!process.env.PORT || !process.env.CONSOLE_PORT || !process.env.MYSQL || !process.env.SECRET_KEY || !process.env.ACCESS_KEY) {
+if (!process.env.MYSQL || !process.env.SECRET_KEY || !process.env.ACCESS_KEY) {
     throw new Error("Missing required environment variables");
 }
 
 export interface ServerConfiguration {
     PORT: number,
-    CONSOLE_PORT: number,
+    CONSOLE: number,
     MYSQL: string,
     DRIVES: string[],
     ACCESS_KEY: string,
@@ -16,8 +16,8 @@ export interface ServerConfiguration {
 }
 
 const configuration: ServerConfiguration = {
-    PORT: Number(process.env.PORT),
-    CONSOLE_PORT: Number(process.env.CONSOLE_PORT),
+    PORT: 9000,
+    CONSOLE: 9001,
     MYSQL: process.env.MYSQL,
     DRIVES: ["/mnt/disk1"],
     ACCESS_KEY: process.env.ACCESS_KEY,

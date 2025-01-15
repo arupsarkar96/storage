@@ -3,7 +3,6 @@ import { Object } from "../interface/object";
 import { deleteBucketService, getBucket, getBucketsService, insertBucketService } from "../service/bucket";
 import { getObjectsService } from "../service/object";
 import { deleteObjectCrontroller } from "./object";
-// import { deleteObjectCrontroller } from "./object";
 
 
 export const getBucketsController = async (): Promise<Bucket[]> => {

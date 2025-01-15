@@ -1,58 +1,46 @@
 import { RowDataPacket } from "mysql2"
-import db from "../db"
+import db from "../config/db"
 import { Bucket } from "../interface/bucket"
 
 
 
 export const getBucketsService = async (): Promise<Bucket[]> => {
-    const connection = await db.getConnection()
     try {
         const sql = 'SELECT * FROM `buckets`'
-        const [rows] = await connection.query(sql)
+        const [rows] = await db.query(sql)
         return rows as Bucket[]
     } catch (error) {
         return []
-    } finally {
-        connection.release()
     }
 }
 
 
 export const getBucket = async (bucket: string): Promise<Bucket | null> => {
-    const connection = await db.getConnection()
     try {
         const sql = 'SELECT * FROM `buckets` WHERE `bucket_id` = ?'
-        const [rows]: [RowDataPacket[], unknown] = await connection.query(sql, [bucket])
+        const [rows]: [RowDataPacket[], unknown] = await db.query(sql, [bucket])
         return rows.length > 0 ? rows[0] as Bucket : null
     } catch (error) {
         return null
-    } finally {
-        connection.release()
     }
 }
 
 
 export const insertBucketService = async (bucket: string) => {
-    const connection = await db.getConnection()
     try {
         const sql = "INSERT INTO `buckets`(`bucket_id`) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM `buckets` WHERE `bucket_id` = ?)"
-        const [result]: [any, any] = await connection.query(sql, [bucket, bucket])
+        const [result]: [any, any] = await db.query(sql, [bucket, bucket])
     } catch (error) {
         console.log(error)
-    } finally {
-        connection.release()
     }
 }
 
 
 export const deleteBucketService = async (bucket: string) => {
-    const connection = await db.getConnection()
     try {
         const sql = "DELETE FROM `buckets` WHERE `bucket_id` = ?"
-        const [result]: [any, any] = await connection.query(sql, [bucket])
+        const [result]: [any, any] = await db.query(sql, [bucket])
     } catch (error) {
         console.log(error)
-    } finally {
-        connection.release()
     }
 }

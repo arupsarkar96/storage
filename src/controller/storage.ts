@@ -1,7 +1,7 @@
 import fs from 'fs'
 import multer from 'multer'
 import { v4 as uuidv4 } from 'uuid'
-import configuration from '../config'
+import configuration from '../config/config'
 
 
 const storageDrives = configuration.DRIVES

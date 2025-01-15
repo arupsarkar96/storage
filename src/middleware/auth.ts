@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import configuration from "../config"
+import configuration from "../config/config"
 
 export const auth = (req: Request, res: Response, next: NextFunction): void => {
     const { access, secret } = req.headers;

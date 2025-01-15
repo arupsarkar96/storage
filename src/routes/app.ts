@@ -1,51 +1,13 @@
 import { Router } from "express";
 import fs from 'fs'
 import { currentStorageDrive, upload } from "../controller/storage";
-import { deleteBucketController, getBucketController, getBucketsController, insertBucketController } from "../controller/bucket";
 import { deleteObjectCrontroller, getObjectController, insertObjectController } from "../controller/object";
 
+const route = Router()
 
-const appRoute = Router()
-
-// Buckets Fetch [GET]
-appRoute.get('/', async (req, res) => {
-    const data = await getBucketsController()
-    res.json(data)
-})
-
-// Specific Bucket [GET]
-appRoute.get('/:bucket', async (req, res) => {
-    const { bucket } = req.params
-    const data = await getBucketController(bucket)
-
-    if (data === null) {
-        res.status(404).json({
-            code: 404,
-            message: "Bucket not found",
-            bucket: bucket,
-            timestamp: Date.now()
-        })
-    } else {
-        res.json(data)
-    }
-})
-
-// Bucket Create [PUT]
-appRoute.put('/:bucket', async (req, res) => {
-    const { bucket } = req.params
-    insertBucketController(bucket)
-    res.sendStatus(200)
-})
-
-// Bucket Delete [DELETE]
-appRoute.delete('/:bucket', async (req, res) => {
-    const { bucket } = req.params
-    const data = await deleteBucketController(bucket)
-    res.json({ message: data })
-})
 
 // Object Store [PUT]
-appRoute.put('/:bucket/:object', upload.single("file"), async (req, res) => {
+route.put('/:bucket/:object', upload.single("file"), async (req, res) => {
     const { bucket, object } = req.params
 
     if (req.file) {
@@ -63,7 +25,7 @@ appRoute.put('/:bucket/:object', upload.single("file"), async (req, res) => {
 })
 
 // Object Stat Fetch [HEAD]
-appRoute.head('/:bucket/:object', async (req, res) => {
+route.head('/:bucket/:object', async (req, res) => {
     const { bucket, object } = req.params;
 
     try {
@@ -88,7 +50,7 @@ appRoute.head('/:bucket/:object', async (req, res) => {
 });
 
 // Object fetch [GET]
-appRoute.get('/:bucket/:object', async (req, res) => {
+route.get('/:bucket/:object', async (req, res) => {
     const { bucket, object } = req.params
     const data = await getObjectController(bucket, object)
 
@@ -127,10 +89,10 @@ appRoute.get('/:bucket/:object', async (req, res) => {
 })
 
 // Delete object [DELETE]
-appRoute.delete('/:bucket/:object', async (req, res) => {
+route.delete('/:bucket/:object', async (req, res) => {
     const { bucket, object } = req.params
     const data = await deleteObjectCrontroller(bucket, object)
     res.json({ message: data })
 })
 
-export default appRoute;
+export default route;
